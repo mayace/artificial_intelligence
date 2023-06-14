@@ -92,8 +92,31 @@ def is_goal(nodo_actual):
     return nodo_actual[1] == 0
 
 
-def getweight(nodo):
+def get_manthattan_value(index):
+    # x, y
+    return index % 3, index // 3
+
+
+def get_manthattan_distance(nodo):
+    total = 0
+    for index, item in enumerate(nodo[0]):
+        # if item is None:
+        #     continue
+        solution_index = nodo[1].index(item)
+        man = get_manthattan_value(index)
+        solution_man = get_manthattan_value(solution_index)
+        total += abs(man[0] - solution_man[0]) + abs(man[1] - solution_man[1])
+        # print(index, item, man,solution_man, total)
+
+    return total
+
+
+def get_casilla_weight(nodo):
     return sum(1 for i, j in zip(nodo[0], nodo[1]) if i != j)
+
+
+def getweight(nodo):
+    return get_manthattan_distance(nodo)
 
 
 def getnode(nodo):
@@ -104,7 +127,7 @@ def solve(nodo_inicio, node_final, delay=1):
     lista = [getnode([nodo_inicio, node_final])]
     while lista:
         nodo_actual = poplist(lista)
-        print(nodo_actual)
+        print(nodo_actual, len(lista))
         time.sleep(delay)
         if is_goal(nodo_actual):
             return print("SOLUCIÓN")
@@ -113,8 +136,8 @@ def solve(nodo_inicio, node_final, delay=1):
         # temp.reverse()
         # print(temp)
         if temp:
-            lista.extend(temp)
+            # lista.extend(temp)
+            lista = temp
             lista.sort(key=lambda x: x[1])
-            # lista = temp
             # print(lista)
     print("NO-SOLUCIÓN")
