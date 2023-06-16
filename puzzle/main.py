@@ -1,5 +1,6 @@
 from game2dboard import Board
 from algo import solve
+import star
 
 
 def mouse_fn(btn, row, col):  # mouse calback function
@@ -15,6 +16,7 @@ b.on_mouse_click = mouse_fn
 # b.show()
 
 
-solve([None, 5, 6, 2, 4, 7, 6, 1, 3], [1, 2, 3, 4, 5, 6, 7, 8, None], delay=0.1)
+# solve([5, 6, 2, 4, 7, 8, 1, 3, None], [1, 2, 3, 4, 5, 6, 7, 8, None], delay=0.05)
+star.solve("021", "120")
 
 print("Done.")

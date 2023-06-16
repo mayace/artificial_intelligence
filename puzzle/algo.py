@@ -100,12 +100,10 @@ def get_manthattan_value(index):
 def get_manthattan_distance(nodo):
     total = 0
     for index, item in enumerate(nodo[0]):
-        # if item is None:
-        #     continue
-        solution_index = nodo[1].index(item)
-        man = get_manthattan_value(index)
-        solution_man = get_manthattan_value(solution_index)
-        total += abs(man[0] - solution_man[0]) + abs(man[1] - solution_man[1])
+        if item:
+            man = get_manthattan_value(index)
+            solution_man = get_manthattan_value(item - 1)
+            total += abs(man[0] - solution_man[0]) + abs(man[1] - solution_man[1])
         # print(index, item, man,solution_man, total)
 
     return total
@@ -125,8 +123,12 @@ def getnode(nodo):
 
 def solve(nodo_inicio, node_final, delay=1):
     lista = [getnode([nodo_inicio, node_final])]
+    visited = []
     while lista:
         nodo_actual = poplist(lista)
+        if nodo_actual[0] in visited:
+            continue
+        visited.append(nodo_actual[0])
         print(nodo_actual, len(lista))
         time.sleep(delay)
         if is_goal(nodo_actual):
@@ -136,8 +138,7 @@ def solve(nodo_inicio, node_final, delay=1):
         # temp.reverse()
         # print(temp)
         if temp:
-            # lista.extend(temp)
-            lista = temp
+            lista.extend(temp)
             lista.sort(key=lambda x: x[1])
             # print(lista)
     print("NO-SOLUCIÓN")
