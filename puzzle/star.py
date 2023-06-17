@@ -1,5 +1,6 @@
 # star * search
 import os
+import random
 import time
 from graphviz import Graph, Digraph
 
@@ -21,20 +22,42 @@ class Node:
         self.graph_create_node()
 
     def graph_get_conent(self):
-        return "\n".join(
-            self.state[index : index + 3] for index in range(0, len(self.state), 3)
+        return (
+            "\n".join(
+                self.state[index : index + 3] for index in range(0, len(self.state), 3)
+            )
+            + "\nh="
+            + str(self.h)
+            + "\nscore="
+            + str(self.score)
         )
 
     def graph_create_node(self):
-        dot.node(str(self.node_num), self.graph_get_conent(), shape="circle")
+        dot.node(
+            str(self.node_num),
+            self.graph_get_conent(),
+            shape="circle",
+        )
         if self.parent:
-            dot.edge(str(self.parent.node_num), str(self.node_num))
+            dot.edge(
+                str(self.parent.node_num),
+                str(self.node_num),
+                label=str(self.cost),
+            )
 
     def __repr__(self):
         return f"({self.state}, {self.cost})"
 
     def set_as_solution(self):
-        dot.node(str(self.node_num), self.graph_get_conent(), shape="doublecircle")
+        dot.node(
+            str(self.node_num),
+            self.graph_get_conent(),
+            shape="doublecircle",
+        )
+        temp = self
+        while temp:
+            dot.node(str(temp.node_num), style="filled", fillcolor="aqua")
+            temp = temp.parent
         # dot.edge(str(self.node_num), str(self.parent.node_num))
 
 
@@ -196,9 +219,23 @@ def reset_dot():
     dot = Digraph(comment="Star Search", format="png")
 
 
+def mix(state, goal):
+    successors = get_5successors(Node(state, h=get_5h(state, goal)), goal)
+    return random.choice(successors).state
+
+
+def solve_mix(goal, n=20):
+    start = goal
+    for i in range(n):
+        start = mix(start, goal)
+
+    solve(start, goal)
+
+
 def solve(start, goal, delay=0.1, limit=0):
     reset_node_num()
     reset_dot()
+    count = 0
     visited = []
     node_list = [
         Node(
@@ -208,6 +245,8 @@ def solve(start, goal, delay=0.1, limit=0):
     ]
     while node_list:
         node = node_list.pop(0)
+        if node in visited:
+            continue
         visited.append(node)
         print(node)
         time.sleep(delay)
@@ -216,9 +255,10 @@ def solve(start, goal, delay=0.1, limit=0):
             print("found")
             break
 
-        successors = get_5successors(node, goal)
-        if successors:
-            node_list.extend(successors)
-            node_list.sort(key=lambda x: x.cost)
+        if not limit or node.level < limit:
+            successors = get_5successors(node, goal)
+            if successors:
+                node_list.extend(successors)
+                node_list.sort(key=lambda x: x.score)
 
     dot.render("star", os.getcwd() + "/output")
