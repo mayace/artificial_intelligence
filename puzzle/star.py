@@ -46,7 +46,10 @@ class Node:
             )
 
     def __repr__(self):
-        return f"({self.state}, {self.cost})"
+        return f"({self.state}, {self.cost}, {self.h})"
+
+    def set_as_visited(self):
+        dot.node(str(self.node_num), style="invisible")
 
     def set_as_solution(self):
         dot.node(
@@ -59,6 +62,114 @@ class Node:
             dot.node(str(temp.node_num), style="filled", fillcolor="aqua")
             temp = temp.parent
         # dot.edge(str(self.node_num), str(self.parent.node_num))
+
+
+class Puzzle:
+    COLS = 3
+    ROWS = 3
+
+    def __init__(self, goal, n=20):
+        self.goal = goal
+        self.n = n
+        self.start = self.get_start()
+
+    def mix(self, state):
+        successors = self.get_successors(Node(state, h=self.get_h(state)))
+        return random.choice(successors).state
+
+    def get_start(self):
+        start = self.goal
+        for i in range(self.n):
+            start = self.mix(start)
+
+        return start
+
+    def get_h(self, state):
+        total = 0
+        for index, item in enumerate(state):
+            sol_index = self.goal.index(item)
+            total += abs(index % self.COLS - sol_index % self.COLS) + abs(
+                index // self.ROWS - sol_index // self.ROWS
+            )
+
+        return total
+
+    def get_sucesor(self, node, i1, i2):
+        state = node.state
+        new_state = ""
+
+        for index in range(len(state)):
+            if index == i1:
+                new_state += state[i2]
+            elif index == i2:
+                new_state += state[i1]
+            else:
+                new_state += state[index]
+
+        return Node(new_state, parent=node, h=self.get_h(new_state))
+
+    def get_successors(self, node):
+        index = node.state.index("0")
+        if index == 0:
+            return [
+                self.get_sucesor(node, 0, 1),
+                self.get_sucesor(node, 0, 3),
+            ]
+
+        if index == 1:
+            return [
+                self.get_sucesor(node, 1, 0),
+                self.get_sucesor(node, 1, 2),
+                self.get_sucesor(node, 1, 4),
+            ]
+        if index == 2:
+            return [
+                self.get_sucesor(node, 2, 1),
+                self.get_sucesor(node, 2, 5),
+            ]
+
+        if index == 3:
+            return [
+                self.get_sucesor(node, 3, 0),
+                self.get_sucesor(node, 3, 4),
+                self.get_sucesor(node, 3, 6),
+            ]
+
+        if index == 4:
+            return [
+                self.get_sucesor(node, 4, 1),
+                self.get_sucesor(node, 4, 3),
+                self.get_sucesor(node, 4, 5),
+                self.get_sucesor(node, 4, 7),
+            ]
+
+        if index == 5:
+            return [
+                self.get_sucesor(node, 5, 2),
+                self.get_sucesor(node, 5, 4),
+                self.get_sucesor(node, 5, 8),
+            ]
+
+        if index == 6:
+            return [
+                self.get_sucesor(node, 6, 3),
+                self.get_sucesor(node, 6, 7),
+            ]
+
+        if index == 7:
+            return [
+                self.get_sucesor(node, 7, 4),
+                self.get_sucesor(node, 7, 6),
+                self.get_sucesor(node, 7, 8),
+            ]
+
+        if index == 8:
+            return [
+                self.get_sucesor(node, 8, 5),
+                self.get_sucesor(node, 8, 7),
+            ]
+
+        return None
 
 
 def get_successors(node: Node, goal: str):
@@ -232,33 +343,115 @@ def solve_mix(goal, n=20):
     solve(start, goal)
 
 
-def solve(start, goal, delay=0.1, limit=0):
+def not_visted(node, visited):
+    result = sum(1 for x in visited if x.state == node.state) == 0
+
+    if not result:
+        node.set_as_visited()
+
+    return result
+
+
+def solve(puzzle: Puzzle, delay=0.1, limit=0):
     reset_node_num()
     reset_dot()
     count = 0
     visited = []
     node_list = [
         Node(
-            start,
-            h=get_5h(start, goal),
+            puzzle.start,
+            h=puzzle.get_h(puzzle.start),
         )
     ]
     while node_list:
+        count += 1
         node = node_list.pop(0)
-        if node in visited:
-            continue
         visited.append(node)
         print(node)
         time.sleep(delay)
-        if node.state == goal:
+        if node.state == puzzle.goal:
             node.set_as_solution()
             print("found")
             break
 
         if not limit or node.level < limit:
-            successors = get_5successors(node, goal)
+            successors = puzzle.get_successors(node)
             if successors:
-                node_list.extend(successors)
-                node_list.sort(key=lambda x: x.score)
+                node_list.extend(
+                    [item for item in successors if not_visted(item, visited)]
+                )
+                node_list.sort(key=lambda x: x.h)
 
     dot.render("star", os.getcwd() + "/output")
+
+
+def solve_by_hill_climbing(puzzle: Puzzle, delay=0.1, limit=0):
+    reset_node_num()
+    reset_dot()
+    count = 0
+    visited = []
+    node_list = [
+        Node(
+            puzzle.start,
+            h=puzzle.get_h(puzzle.start),
+        )
+    ]
+    while node_list:
+        count += 1
+        node = node_list.pop(0)
+        visited.append(node)
+        print(node)
+        time.sleep(delay)
+        if node.state == puzzle.goal:
+            node.set_as_solution()
+            print("found")
+            break
+
+        if not limit or node.level < limit:
+            successors = puzzle.get_successors(node)
+            if successors:
+                successors = [item for item in successors if not_visted(item, visited)]
+                successors.sort(key=lambda x: x.h)
+                if successors:
+                    while len(successors) > 1:
+                        successors.pop().set_as_visited()
+                    node_list.extend(successors)
+
+    dot.render("climbing", os.getcwd() + "/output")
+
+
+def solve_by_beam(
+    puzzle: Puzzle, delay=0.1, limit=0, beam_size=2, exclude_visited=True
+):
+    reset_node_num()
+    reset_dot()
+    count = 0
+    visited = []
+    node_list = [
+        Node(
+            puzzle.start,
+            h=puzzle.get_h(puzzle.start),
+        )
+    ]
+    while node_list:
+        count += 1
+        node = node_list.pop(0)
+        visited.append(node)
+        print(node)
+        time.sleep(delay)
+        if node.state == puzzle.goal:
+            node.set_as_solution()
+            print("found")
+            break
+
+        if not limit or node.level < limit:
+            successors = puzzle.get_successors(node)
+            if successors:
+                if exclude_visited:
+                    successors = [
+                        item for item in successors if not_visted(item, visited)
+                    ]
+                successors.sort(key=lambda x: x.h)
+                node_list.extend(successors[:beam_size])
+
+    dot.render("beam", os.getcwd() + "/output")
