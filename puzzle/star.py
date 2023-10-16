@@ -2,6 +2,7 @@
 import os
 import random
 import time
+import copy
 from graphviz import Graph, Digraph
 
 NODES_NUM = 0
@@ -11,7 +12,9 @@ dot = Digraph(comment="Star Search", format="png")
 
 
 class Node:
-    def __init__(self, state, parent=None, h=None, cost=0, node_num=None):
+    def __init__(
+        self, state, parent=None, h=None, cost=0, node_num=None, no_graph=None
+    ):
         self.state: str = state
         self.parent: Node = parent
         self.h = h
@@ -19,12 +22,15 @@ class Node:
         self.node_num: int = node_num if node_num else get_node_num()
         self.cost: int = cost if cost else self.level
         self.score: int = self.cost + self.h
-        self.graph_create_node()
+        self.no_graph = no_graph
+        if not no_graph:
+            self.graph_create_node()
 
     def graph_get_conent(self):
         return (
             "\n".join(
-                self.state[index : index + 3] for index in range(0, len(self.state), 3)
+                str(self.state[index : index + 4])
+                for index in range(0, len(self.state), 4)
             )
             + "\nh="
             + str(self.h)
@@ -65,6 +71,8 @@ class Node:
 
 
 class Puzzle:
+    """Max puzzle class with 3*3 matrix"""
+
     COLS = 3
     ROWS = 3
 
@@ -74,11 +82,13 @@ class Puzzle:
         self.start = self.get_start()
 
     def mix(self, state):
-        successors = self.get_successors(Node(state, h=self.get_h(state)))
+        successors = self.get_successors(
+            Node(state, h=self.get_h(state), no_graph=True)
+        )
         return random.choice(successors).state
 
     def get_start(self):
-        start = self.goal
+        start = copy.deepcopy(self.goal)
         for i in range(self.n):
             start = self.mix(start)
 
@@ -170,6 +180,118 @@ class Puzzle:
             ]
 
         return None
+
+
+class Puzzle15(Puzzle):
+    COLS = 4
+    ROWS = 4
+
+    def get_sucesor(self, node: Node, i1, i2):
+        state = copy.deepcopy(node.state)
+        temp = state[i1]
+        state[i1] = state[i2]
+        state[i2] = temp
+
+        return Node(state, parent=node, h=self.get_h(state), no_graph=node.no_graph)
+
+    def get_successors(self, node: Node):
+        zero_index = node.state.index(0)
+        if zero_index == 0:
+            return [
+                self.get_sucesor(node, 0, 1),
+                self.get_sucesor(node, 0, 4),
+            ]
+        if zero_index == 1:
+            return [
+                self.get_sucesor(node, 1, 0),
+                self.get_sucesor(node, 1, 2),
+                self.get_sucesor(node, 1, 5),
+            ]
+        if zero_index == 2:
+            return [
+                self.get_sucesor(node, 2, 1),
+                self.get_sucesor(node, 2, 3),
+                self.get_sucesor(node, 2, 6),
+            ]
+        if zero_index == 3:
+            return [
+                self.get_sucesor(node, 3, 2),
+                self.get_sucesor(node, 3, 7),
+            ]
+        if zero_index == 4:
+            return [
+                self.get_sucesor(node, 4, 0),
+                self.get_sucesor(node, 4, 5),
+                self.get_sucesor(node, 4, 8),
+            ]
+        if zero_index == 5:
+            return [
+                self.get_sucesor(node, 5, 1),
+                self.get_sucesor(node, 5, 4),
+                self.get_sucesor(node, 5, 6),
+                self.get_sucesor(node, 5, 9),
+            ]
+        if zero_index == 6:
+            return [
+                self.get_sucesor(node, 6, 2),
+                self.get_sucesor(node, 6, 5),
+                self.get_sucesor(node, 6, 7),
+                self.get_sucesor(node, 6, 10),
+            ]
+        if zero_index == 7:
+            return [
+                self.get_sucesor(node, 7, 3),
+                self.get_sucesor(node, 7, 6),
+                self.get_sucesor(node, 7, 11),
+            ]
+        if zero_index == 8:
+            return [
+                self.get_sucesor(node, 8, 4),
+                self.get_sucesor(node, 8, 9),
+                self.get_sucesor(node, 8, 12),
+            ]
+        if zero_index == 9:
+            return [
+                self.get_sucesor(node, 9, 5),
+                self.get_sucesor(node, 9, 8),
+                self.get_sucesor(node, 9, 10),
+                self.get_sucesor(node, 9, 13),
+            ]
+        if zero_index == 10:
+            return [
+                self.get_sucesor(node, 10, 6),
+                self.get_sucesor(node, 10, 9),
+                self.get_sucesor(node, 10, 11),
+                self.get_sucesor(node, 10, 14),
+            ]
+        if zero_index == 11:
+            return [
+                self.get_sucesor(node, 11, 7),
+                self.get_sucesor(node, 11, 10),
+                self.get_sucesor(node, 11, 15),
+            ]
+        if zero_index == 12:
+            return [
+                self.get_sucesor(node, 12, 8),
+                self.get_sucesor(node, 12, 13),
+            ]
+        if zero_index == 13:
+            return [
+                self.get_sucesor(node, 13, 9),
+                self.get_sucesor(node, 13, 12),
+                self.get_sucesor(node, 13, 14),
+            ]
+        if zero_index == 14:
+            return [
+                self.get_sucesor(node, 14, 10),
+                self.get_sucesor(node, 14, 13),
+                self.get_sucesor(node, 14, 15),
+            ]
+        if zero_index == 15:
+            return [
+                self.get_sucesor(node, 15, 11),
+                self.get_sucesor(node, 15, 14),
+            ]
 
 
 def get_successors(node: Node, goal: str):
@@ -453,5 +575,6 @@ def solve_by_beam(
                     ]
                 successors.sort(key=lambda x: x.h)
                 node_list.extend(successors[:beam_size])
+                node_list.sort(key=lambda x: x.h)
 
     dot.render("beam", os.getcwd() + "/output")
