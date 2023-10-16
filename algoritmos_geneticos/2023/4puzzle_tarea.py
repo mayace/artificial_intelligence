@@ -68,5 +68,5 @@ for _ in range(4):
 
 
 print(generation)
-# solve(generation, 15)
+solve(generation, 15)
 solve_convergence(generation, 0.95)
